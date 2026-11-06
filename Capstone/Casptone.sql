@@ -15,17 +15,6 @@ where s.store_ID  in (select storeID from store_locations as sl
 where sl.state = 'Maine'
 )) as Maine_Total_Revenue;
 
-
-SELECT
-    sl.State,
-    SUM(s.Sale_Amount) AS store_revenue
-FROM store_sales AS s
-JOIN store_locations AS sl
-    ON s.Store_ID = sl.StoreId
-WHERE sl.State IN
-    ('Maryland', 'Massachusetts', 'Maine', 'New Jersey')
-GROUP BY sl.State;
-
 -- Start date and End date covered for online sales: 
 SELECT * FROM sample_sales.online_sales 
 order by date asc; -- 2022-01-01
@@ -48,21 +37,21 @@ order by year(date), month(date);
 -- Yearly breakdown for online: 
 select year(date) as year , sum(salestotal) as Maine_total_revenue from online_sales
 where shiptostate = 'Maine'
-group by year(date), month(date)
-order by year(date), month(date);
+group by year(date)
+order by year(date);
 
 -- In-store 
 
 -- Monthly breakdown for In-store:
 select month(transaction_date), year(transaction_date) as year , sum(sale_amount) as Maine_monthly_revenue from store_sales
-where store_ID in (select store_ID from store_locations
+where store_ID in (select storeID from store_locations
 where state = 'Maine')
 group by year(transaction_date), month(transaction_date)
 order by year(transaction_date), month(transaction_date);
 
 -- Yearly breakdown for In-store: 
 select year(transaction_date) as year , sum(sale_amount) as Maine_yearly_revenue from store_sales
-where store_ID in (select store_ID from store_locations
+where store_ID in (select storeID from store_locations
 where state = 'Maine')
 group by year(transaction_date)
 order by year(transaction_date);
@@ -122,7 +111,6 @@ where o.shiptostate = 'Maine'
 group by year(o.date), month(o.date), ic.category
 order by year(o.date), month(o.date);
 
-
 -- Store ranking in sales performance from top highest to bottom lowest
 select s.store_Id, sl.StoreLocation, sum(s.sale_amount) as store_revenue from store_sales as s
 join store_locations as sl
@@ -131,3 +119,29 @@ where state = 'Maine'
 group by storelocation, store_ID
 order by sum(sale_amount) desc; 
 
+-- What is your recommendation for where to focus sales attention in the next quarter?
+-- 2025 in store ranking
+select year(s.transaction_date), s.store_Id, sl.StoreLocation, sum(s.sale_amount) as store_revenue from store_sales as s
+join store_locations as sl
+on s.store_Id = sl.storeID
+where state = 'Maine' and year(s.transaction_date) = '2025'
+group by year(s.transaction_date), storelocation, store_ID
+order by sum(sale_amount) desc; 
+
+-- 2025 Q4 store ranking: 
+select year(s.transaction_date) as Year , month(s.transaction_date) as Month, s.store_Id, sl.StoreLocation, sum(s.sale_amount) as Store_revenue from store_sales as s
+join store_locations as sl
+on s.store_Id = sl.storeID
+where state = 'Maine' and year(s.transaction_date) = 2025 and month(s.transaction_date) in (10, 11, 12)
+group by storelocation, store_ID, year(s.transaction_date), month(s.transaction_date)
+order by month(s.transaction_date), sum(sale_amount) desc; 
+
+-- Bar Harbor Q4 Performance 
+select year(s.transaction_date), month(s.transaction_date) as Month, s.store_Id, sl.StoreLocation, sum(s.sale_amount) as store_revenue from store_sales as s
+join store_locations as sl
+on s.store_Id = sl.storeID
+where storelocation = 'Bar Harbor'and state = 'Maine' and year(s.transaction_date) = 2025 and month(s.transaction_date) in (10, 11, 12)
+group by storelocation, store_ID, year(s.transaction_date), month(s.transaction_date)
+order by month(s.transaction_date), sum(sale_amount) desc; 
+
+-- Recommendation Analysis for Q1 2026 from 2025 Q4: I would recommend investigating Bar Harbor steady decline in Q4 2024.  It shows the for each month of the quarter the revenue declines each month.
